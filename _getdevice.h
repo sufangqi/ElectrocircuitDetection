@@ -6,6 +6,7 @@ using namespace std;
 typedef struct _electronComponent{
 	cv::Point center;
 	int radius;
+	vector<Point> contours;
 	Vec4i LinkLineOne;
 	Vec4i LinkLineTwo;
 }electronComponent;
@@ -20,7 +21,7 @@ void calcProject(Mat &img,MatND hist,Mat&backproj);
 
 void ExtractColor(Mat img,MatND &hist);
 
-void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4i &LinkLineTwo);
+void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4i &LinkLineTwo,vector<Point> &DeviceContours);
 
 void ExtractDeviceComponentInfo(Mat img,Vec3i centre,electronComponent &DeviceInfo);
 

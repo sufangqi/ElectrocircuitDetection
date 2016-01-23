@@ -68,10 +68,9 @@ void ExtractColor(Mat img,MatND &hist)
 	imshow("Gray",MaskImg);
 #endif
 }
-void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4i &LinkLineTwo)
+void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4i &LinkLineTwo,vector<Point> &DeviceContours)
 {
     vector<vector<Point>> contours;
-	vector<Point> DeviceContours;
 #ifdef _SHOW_
 	Mat DisplayImg = Mat::zeros(backProjectImg.size(),CV_8UC3);;
 #endif
@@ -192,12 +191,18 @@ void ExtractDeviceComponentInfo(Mat img,Vec3i centre,electronComponent &DeviceIn
 #endif
 	Point centreInbackProject = Point(c[2]*1.5,c[2]*1.5);//在ROI图像圆心的位置
 	Vec4i lines_1,lines_2;
-	findDeviceLinkLine(backProject,centreInbackProject,lines_1,lines_2);
+	vector<Point> DeviceContours;
+	findDeviceLinkLine(backProject,centreInbackProject,lines_1,lines_2,DeviceContours);
 
 	DeviceInfo.LinkLineOne =Vec4i((lines_1[0] + ROIorigin.x),(lines_1[1] + ROIorigin.y),(lines_1[2] + ROIorigin.x),lines_1[3]+ROIorigin.y);
 	DeviceInfo.LinkLineTwo =Vec4i((lines_2[0] + ROIorigin.x),(lines_2[1] + ROIorigin.y),(lines_2[2] + ROIorigin.x),lines_2[3]+ROIorigin.y);
 	DeviceInfo.center = centreInbackProject + Point(ROIorigin.x,ROIorigin.y);
 	DeviceInfo.radius =centre[2];
+	
+	for(int i = 0;i < DeviceContours.size();i++){
+		DeviceContours[i] = DeviceContours[i] + ROIorigin;
+	}
+	DeviceInfo.contours = DeviceContours;
 }
 void getDevice(Mat img,vector<electronComponent> &DeviceSet)
 { 
