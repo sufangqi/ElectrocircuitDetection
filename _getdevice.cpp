@@ -68,7 +68,7 @@ void ExtractColor(Mat img,MatND &hist)
 	imshow("Gray",MaskImg);
 #endif
 }
-void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4i &LinkLineTwo,vector<Point> &DeviceContours)
+void findDeviceLinkPoint(Mat backProjectImg,Point &centre,Point &LinkPointOne,Point &LinkPointTwo,vector<Point> &DeviceContours)
 {
     vector<vector<Point>> contours;
 #ifdef _SHOW_
@@ -107,6 +107,7 @@ void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4
 	int label3 = -1;
 	Point EndPoint_4 = DeviceContours[label[3]];
 
+	//距离最远点距离大于30个像素的点，作为第二个最远点
 	for(int i = 0;i < label.size();i++){
 		if(norm(DeviceContours[label[i]] - EndPoint_1) > 30){
 			EndPoint_2 = DeviceContours[label[i]];
@@ -114,7 +115,7 @@ void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4
 			break;
 		}
     }
-
+	//距离前两个点距离大于30个像素的点，作为第三个最远点
    for(int i = labe2 + 1;i < label.size();i++){
 	   if(norm(DeviceContours[label[i]] - EndPoint_1) >30 && norm(DeviceContours[label[i]] - EndPoint_2) >30){
           EndPoint_3 = DeviceContours[label[i]];
@@ -122,7 +123,7 @@ void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4
 		  break;
 	   }
 	}
-
+   //距离前三个点距离大于30个像素的点，最为第四个最远点
    for(int i = label3 + 1;i < label.size();i++){
 	   if(norm(DeviceContours[label[i]] - EndPoint_1) >30 && norm(DeviceContours[label[i]] - EndPoint_2) >30 && norm(DeviceContours[label[i]] - EndPoint_3) >30){
           EndPoint_4 = DeviceContours[label[i]];
@@ -131,20 +132,20 @@ void findDeviceLinkLine(Mat backProjectImg,Point &centre,Vec4i &LinkLineOne,Vec4
 	}
 	
 	
-	
+	//判断哪两个点为一组
 	double Dis1_2 = norm(EndPoint_1 - EndPoint_2);
 	double Dis1_3 = norm(EndPoint_1 - EndPoint_3);
 	double Dis1_4 = norm(EndPoint_1 - EndPoint_4);
-
+	
 	if(Dis1_2 < Dis1_3 && Dis1_2 < Dis1_4){
-		LinkLineOne = Vec4i(EndPoint_1.x,EndPoint_1.y,EndPoint_2.x,EndPoint_2.y);
-		LinkLineTwo = Vec4i(EndPoint_3.x,EndPoint_3.y,EndPoint_4.x,EndPoint_4.y);
+		LinkPointOne = Point((EndPoint_1.x + EndPoint_2.x) / 2,(EndPoint_1.y + EndPoint_2.y) / 2);
+		LinkPointTwo = Point((EndPoint_3.x + EndPoint_4.x) / 2,(EndPoint_3.y + EndPoint_4.y) / 2);
 	}else if(Dis1_3 < Dis1_2 && Dis1_3 < Dis1_4){
-		LinkLineOne = Vec4i(EndPoint_1.x,EndPoint_1.y,EndPoint_3.x,EndPoint_3.y);
-		LinkLineTwo = Vec4i(EndPoint_2.x,EndPoint_2.y,EndPoint_4.x,EndPoint_4.y);
+		LinkPointOne = Point((EndPoint_1.x + EndPoint_3.x) / 2,(EndPoint_1.y + EndPoint_3.y) / 2);
+		LinkPointTwo = Point((EndPoint_2.x + EndPoint_4.x) / 2,(EndPoint_2.y + EndPoint_4.y) / 2);
 	}else if(Dis1_4 < Dis1_2 && Dis1_4 < Dis1_3){
-		LinkLineOne = Vec4i(EndPoint_1.x,EndPoint_1.y,EndPoint_4.x,EndPoint_4.y);
-		LinkLineTwo = Vec4i(EndPoint_2.x,EndPoint_2.y,EndPoint_3.x,EndPoint_3.y);
+		LinkPointOne = Point((EndPoint_1.x + EndPoint_4.x) / 2,(EndPoint_1.y + EndPoint_4.y) / 2);
+		LinkPointTwo = Point((EndPoint_2.x + EndPoint_3.x) / 2,(EndPoint_2.y + EndPoint_3.y) / 2);
 	}
 
 
@@ -190,13 +191,14 @@ void ExtractDeviceComponentInfo(Mat img,Vec3i centre,electronComponent &DeviceIn
 	imshow("DeviceComponent",DeviceComponent);
 #endif
 	Point centreInbackProject = Point(c[2]*1.5,c[2]*1.5);//在ROI图像圆心的位置
-	Vec4i lines_1,lines_2;
+	Point LinkPoint_1,linkPoint_2;
 	vector<Point> DeviceContours;
-	findDeviceLinkLine(backProject,centreInbackProject,lines_1,lines_2,DeviceContours);
+	findDeviceLinkPoint(backProject,centreInbackProject, LinkPoint_1,linkPoint_2,DeviceContours);
 
-	DeviceInfo.LinkLineOne =Vec4i((lines_1[0] + ROIorigin.x),(lines_1[1] + ROIorigin.y),(lines_1[2] + ROIorigin.x),lines_1[3]+ROIorigin.y);
-	DeviceInfo.LinkLineTwo =Vec4i((lines_2[0] + ROIorigin.x),(lines_2[1] + ROIorigin.y),(lines_2[2] + ROIorigin.x),lines_2[3]+ROIorigin.y);
-	DeviceInfo.center = centreInbackProject + Point(ROIorigin.x,ROIorigin.y);
+	DeviceInfo.LinkPoint.push_back(LinkPoint_1 + ROIorigin);
+	DeviceInfo.LinkPoint.push_back(linkPoint_2 + ROIorigin);
+
+	DeviceInfo.center = centreInbackProject + ROIorigin;
 	DeviceInfo.radius =centre[2];
 	
 	for(int i = 0;i < DeviceContours.size();i++){
@@ -235,4 +237,38 @@ void getDevice(Mat img,vector<electronComponent> &DeviceSet)
 	}
 	imshow("SourceImg",cimg);
 #endif
+}
+
+void getDeviceConnectInfo(vector<electronComponent> DeviceSet,vector<Cline> lines,vector<vector<CDeviceConnectinfo>> &DeviceConnectinfoSet)
+{
+	int thresOfConnect = 10;
+	for(int i = 0;i < lines.size();i++){
+		vector<CDeviceConnectinfo> EveryLineDeviceConnectinfo;
+		for(int j = 0;j < lines[i].numPoint;j++){
+			CDeviceConnectinfo DeviceConnectinfo = {-1,-1};
+			double Dist_min = 10000000000000000;
+			for(int k = 0;k < DeviceSet.size();k++){   
+				double Dist = 0;
+				int Label = -1;
+				double Dist_0 = norm(lines[i].endPoint[j] - DeviceSet[k].LinkPoint[0]);//和元器件的第一个连接点的距离
+				double Dist_1 = norm(lines[i].endPoint[j] - DeviceSet[k].LinkPoint[1]);//和元器件的第二个连接点的距离
+				
+					if(Dist_0 < Dist_1){
+						Dist = Dist_0;
+						Label = 0;
+					}else{
+						Dist = Dist_1;
+						Label = 1;
+					}
+					//如果存在距离小于十个像素的链接点，则认为与该器件的一个端点相连
+					if(Dist < Dist_min && Dist < thresOfConnect){
+						Dist_min = Dist;
+						DeviceConnectinfo.DeviceName = k;
+						DeviceConnectinfo.DeviceLinkNumber = Label;
+					}
+			}
+			EveryLineDeviceConnectinfo.push_back(DeviceConnectinfo);
+		}
+		DeviceConnectinfoSet.push_back(EveryLineDeviceConnectinfo);
+	}
 }
