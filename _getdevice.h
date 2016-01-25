@@ -22,5 +22,5 @@ void ExtractDeviceComponentInfo(Mat img,Vec3i centre,electronComponent &DeviceIn
 
 void getDevice(Mat img,vector<electronComponent> &DeviceSet);
 
-void getDeviceConnectInfo(vector<electronComponent> DeviceSet,vector<Cline> lines,vector<vector<CDeviceConnectinfo>> &DeviceConnectinfoSet);
+void getDeviceConnectInfo(vector<electronComponent> DeviceSet,vector<Cline> lines,vector<vector<CDeviceConnectinfo>> &DeviceConnectinfoSet,vector<CBreakPoint> &BreakPointSet);
 #endif

@@ -10,16 +10,17 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    Mat cimg = imread("D:/facedata/阿里巴巴开放性项目/电路游戏识别检测/电路游戏8.jpg");
+    Mat cimg = imread("D:/facedata/阿里巴巴开放性项目/电路游戏识别检测/电路游戏识别检测（未连接）/电路游戏5-5.jpg");
 	Mat img;
 	resize(cimg,cimg,Size(cimg.cols/5,cimg.rows/5));
 	
 	vector<electronComponent> DeviceSet;
 	vector<vector<CDeviceConnectinfo>> DeviceConnectinfoSet;
-	getDevice(cimg,DeviceSet);
+	vector<CBreakPoint> BreakPointSet;
 	vector<Cline> circuitLines;
+	getDevice(cimg,DeviceSet);
     getEndPointOfLine(cimg,DeviceSet,circuitLines);
-	getDeviceConnectInfo(DeviceSet,circuitLines,DeviceConnectinfoSet);
+	getDeviceConnectInfo(DeviceSet,circuitLines,DeviceConnectinfoSet,BreakPointSet);
 #ifdef _SHOW_
 	electronComponent DeviceInfo;
 	Point LinkPoint;
@@ -28,8 +29,7 @@ int main(int argc, char** argv)
 	for(int i =0;i < DeviceConnectinfoSet.size();i++){
 		for(int j = 0;j < DeviceConnectinfoSet[i].size();j++)
 		{
-			if(DeviceConnectinfoSet[i][j].DeviceName != -1 && DeviceConnectinfoSet[i][j].DeviceLinkNumber != -1)
-			{
+
 				DeviceInfo = DeviceSet[ DeviceConnectinfoSet[i][j].DeviceName];
 				LinkPoint  = DeviceInfo.LinkPoint[ DeviceConnectinfoSet[i][j].DeviceLinkNumber];
 				circle(SrcCopy,LinkPoint ,5,color,CV_FILLED);
@@ -37,10 +37,14 @@ int main(int argc, char** argv)
 				_itoa(i, str,10);
 				putText(SrcCopy,string(str),LinkPoint,0,1,Scalar(255,255,255),2);
 				circle(SrcCopy,DeviceInfo.center,DeviceInfo.radius,Scalar(0,0,255),1);
-			}
+			cout<<DeviceConnectinfoSet[i][j].DeviceName<<" ";
+		}
+
+		for(int i = 0;i < BreakPointSet.size();i++){
+			Point breakPoint = circuitLines[BreakPointSet[i].BreakLineName].endPoint[BreakPointSet[i].BreakPointLabel];
+			putText(cimg,string("BreakPoint"),breakPoint ,1,1,Scalar(255,0,255),2);
 		}
 		imshow("srcCopy", SrcCopy);
-		waitKey(0);
 	}
 #endif
 #ifdef _SHOW_
@@ -58,9 +62,9 @@ int main(int argc, char** argv)
         }
         
     }
-
-#endif
 	imshow("Source",cimg);
+#endif
+
 	waitKey();
     return 0;
 }

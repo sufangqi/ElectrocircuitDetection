@@ -25,5 +25,10 @@ struct CDeviceConnectinfo{
 	int DeviceName;
 	int DeviceLinkNumber;
 };
+//短路处的结构体
+struct CBreakPoint{
+	int BreakLineName;
+	int BreakPointLabel;
+};
 
 #endif

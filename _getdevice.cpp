@@ -158,8 +158,6 @@ void findDeviceLinkPoint(Mat backProjectImg,Point &centre,Point &LinkPointOne,Po
 	circle(DisplayImg,DeviceContours[label[2]],3,Scalar(255),CV_FILLED);
 	circle(DisplayImg,DeviceContours[label[3]],3,Scalar(255),CV_FILLED);
     circle(DisplayImg,centre,3,Scalar(255),CV_FILLED);
-	line(DisplayImg,Point(LinkLineOne[0],LinkLineOne[1]),Point(LinkLineOne(2),LinkLineOne[3]),Scalar(255,0,0));
-	line(DisplayImg,Point(LinkLineTwo[0],LinkLineTwo[1]),Point(LinkLineTwo[2],LinkLineTwo[3]),Scalar(255,0,0));
 	imshow("LinkPoint", DisplayImg);
 #endif
 }
@@ -228,18 +226,15 @@ void getDevice(Mat img,vector<electronComponent> &DeviceSet)
 	cvtColor(img,img,CV_GRAY2BGR);
 	for(int i = 0;i <DeviceSet.size();i++){
 		electronComponent DeviceInfo = DeviceSet[i];
-	    circle(img,Point(DeviceInfo.LinkLineOne[0],DeviceInfo.LinkLineOne[1]),5,Scalar(0,0,255),CV_FILLED);
-		circle(img,Point(DeviceInfo.LinkLineOne[2],DeviceInfo.LinkLineOne[3]),5,Scalar(0,0,255),CV_FILLED);
-		circle(img,Point(DeviceInfo.LinkLineTwo[0],DeviceInfo.LinkLineTwo[1]),5,Scalar(0,255,255),CV_FILLED);
-		circle(img,Point(DeviceInfo.LinkLineTwo[2],DeviceInfo.LinkLineTwo[3]),5,Scalar(0,255,255),CV_FILLED);
+		circle(img,DeviceInfo.LinkPoint[0],5,Scalar(0,0,255),CV_FILLED);
+		circle(img,DeviceInfo.LinkPoint[1],5,Scalar(0,0,255),CV_FILLED);
 		circle(img,DeviceInfo.center,DeviceInfo.radius,Scalar(0,0,255),3);
 		imshow("Result",img);
 	}
-	imshow("SourceImg",cimg);
 #endif
 }
 
-void getDeviceConnectInfo(vector<electronComponent> DeviceSet,vector<Cline> lines,vector<vector<CDeviceConnectinfo>> &DeviceConnectinfoSet)
+void getDeviceConnectInfo(vector<electronComponent> DeviceSet,vector<Cline> lines,vector<vector<CDeviceConnectinfo>> &DeviceConnectinfoSet,vector<CBreakPoint> &BreakPointSet)
 {
 	int thresOfConnect = 10;
 	for(int i = 0;i < lines.size();i++){
@@ -267,7 +262,14 @@ void getDeviceConnectInfo(vector<electronComponent> DeviceSet,vector<Cline> line
 						DeviceConnectinfo.DeviceLinkNumber = Label;
 					}
 			}
-			EveryLineDeviceConnectinfo.push_back(DeviceConnectinfo);
+			if(DeviceConnectinfo.DeviceName != -1 &&DeviceConnectinfo.DeviceLinkNumber != -1){
+			    EveryLineDeviceConnectinfo.push_back(DeviceConnectinfo);
+			}else{
+				CBreakPoint breakPoint;//¶Ìµã
+				breakPoint.BreakLineName = i;
+				breakPoint.BreakPointLabel = j;
+				BreakPointSet.push_back(breakPoint);
+			}
 		}
 		DeviceConnectinfoSet.push_back(EveryLineDeviceConnectinfo);
 	}

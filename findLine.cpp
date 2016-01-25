@@ -272,15 +272,19 @@ void getEndPointOfLine(const Mat src,const vector<electronComponent> DeviceSet,v
     //求半圆的半径 圆心
     vector<vector<Point> > contoursb;
     Mat copyBinaryb = binaryB.clone();
+#ifdef _SHOW_
     Mat binaryBrgb;
     cvtColor(binaryB,binaryBrgb, CV_GRAY2BGR);
+#endif
     findContours(copyBinaryb, contoursb, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     for (int k = 0; k < contoursb.size(); k++) {
         CSemicircle semi;
         float radius;
         Point2f center;
         minEnclosingCircle(contoursb[k],center, radius);
+#ifdef _SHOW_
         circle(binaryBrgb, center, radius, Scalar(0,0,255));
+#endif
         semi.center = center;
         semi.radius = radius;
         semicircles.push_back(semi);
@@ -310,6 +314,7 @@ void getEndPointOfLine(const Mat src,const vector<electronComponent> DeviceSet,v
         }
     }
     imshow("rgb2", rgb2);
+	imshow("ConnectPart",binaryBrgb);
     waitKey();
     std::cout << "newLines: " << newLines.size() << std::endl;
 #endif
